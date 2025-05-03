@@ -102,7 +102,3 @@ You can modify the application by:
 - `app.py`: Main Streamlit application
 - `README.md`: Project documentation
 - Additional files can be added as your project grows
-
-## Contact
-
-For questions or support, please contact [your-email@example.com]
