@@ -1,13 +1,13 @@
-"""
-Configuration settings for the JobPulse application
-"""
+# config.py
+from dotenv import load_dotenv
+import os
 
-# MongoDB Configuration
-#password need to be written in the connection string
-# Replace 'password' with the actual password for the MongoDB user
-MONGO_CONNECTION_STRING = "mongodb+srv://Phase2_ADT:password2504@phase2cluster.svnfuwt.mongodb.net/"
-MONGO_DB_NAME = "h1b_db"
-MONGO_COLLECTION_NAME = "applications"
+# Load environment variables from .env file
+load_dotenv()
+
+MONGO_CONNECTION_STRING = os.getenv("MONGO_CONNECTION_STRING")
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME")
+MONGO_COLLECTION_NAME = os.getenv("MONGO_COLLECTION_NAME")
 
 # Application Settings
 APP_TITLE = "JobPulse - Labor Market Insights"

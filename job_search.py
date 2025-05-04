@@ -2,8 +2,10 @@ import streamlit as st
 import pymongo
 import pandas as pd
 import plotly.express as px
+import config
+from datetime import datetime
 
-def render_job_search(client):
+def render_job_search(_client):
     """
     Renders the advanced job search component
     """
@@ -11,13 +13,13 @@ def render_job_search(client):
     st.write("Find your perfect job opportunity by exploring our database of positions")
     
     # Get data from MongoDB
-    db = client.jobpulse
-    items = list(db.job_listings.find())
+    db = _client[config.MONGO_DB_NAME]
+    items = list(db[config.MONGO_COLLECTION_NAME].find())
     if not items:
         st.warning("No job listings found in the database.")
         return
     
-    df = pd.DataFrame(items)
+    df = pd.json_normalize(items)
     
     # Create multiple search filters in columns
     col1, col2 = st.columns(2)
@@ -89,13 +91,14 @@ def render_job_search(client):
     else:
         # Show job cards
         for i, row in filtered_df.iterrows():
-            with st.expander(f"{row['JOB_TITLE']} at {row['employer_details']['EMPLOYER_NAME']}"):
+            with st.expander(f"{row['JOB_TITLE']} at {row['employer_details.EMPLOYER_NAME']}"):
                 col1, col2 = st.columns([2, 1])
                 
                 with col1:
                     st.markdown(f"**Job Title:** {row['JOB_TITLE']}")
-                    st.markdown(f"**Employer:** {row['employer_details']['EMPLOYER_NAME']}")
-                    st.markdown(f"**Location:** {row['worksite_details']['WORKSITE_CITY']}, {row['worksite_details']['WORKSITE_STATE']}")
+                    st.markdown(f"**Employer:** {row['employer_details.EMPLOYER_NAME']}")
+                    st.markdown(f"**Employer Location:** {row['employer_details.EMPLOYER_CITY']}, {row['employer_details.EMPLOYER_STATE']}")
+                    st.markdown(f"**Location:** {row['worksite_details.WORKSITE_CITY']}, {row['worksite_details.WORKSITE_STATE']}")
                     st.markdown(f"**Occupation:** {row['SOC_TITLE']}")
                     
                     # Format dates for display

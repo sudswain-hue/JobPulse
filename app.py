@@ -57,10 +57,12 @@ _client = init_connection()
 
 # Check if connection succeeded
 if _client:
-    st.success("Connected to MongoDB")
+    #st.success("Connected to MongoDB")
     data = get_data(_client)
     if data:
-        df = pd.DataFrame(data)
+        #df = pd.DataFrame(data)
+        # Flatten nested dictionaries (1 level deep)
+        df = pd.json_normalize(data)
     else:
         st.warning("No data available in the MongoDB collection. Please check your database content.")
         df = pd.DataFrame()
@@ -98,7 +100,7 @@ if not df.empty and page == "Dashboard":
     
     # Filter by visa class
     if 'VISA_CLASS' in df.columns:
-        visa_options = ['All'] + sorted(df['VISA_CLASS'].unique().tolist())
+        visa_options = ['All'] + sorted(df['VISA_CLASS'].dropna().unique().tolist())
         selected_visa = st.sidebar.selectbox('Visa Class', visa_options)
     
     # Filter by job title
@@ -114,11 +116,11 @@ if not df.empty and page == "Dashboard":
     
     # Apply filters
     filtered_df = df.copy()
-    if selected_visa != 'All' and 'VISA_CLASS' in df.columns:
+    if selected_visa != 'All':
         filtered_df = filtered_df[filtered_df['VISA_CLASS'] == selected_visa]
-    if selected_job != 'All' and 'JOB_TITLE' in df.columns:
+    if selected_job != 'All':
         filtered_df = filtered_df[filtered_df['JOB_TITLE'] == selected_job]
-    if 'employer_details.EMPLOYER_STATE' in df.columns and selected_state != 'All':
+    if selected_state != 'All':
         filtered_df = filtered_df[filtered_df['employer_details.EMPLOYER_STATE'] == selected_state]
     
     # Dashboard content
@@ -205,7 +207,7 @@ if page == "Job Search":
     # Render the job search component
     job_search.render_job_search(_client)
 
-elif page == "Market Trends":
+if page == "Market Trends":
     st.title("Labor Market Trends")
     st.write("Analyze the latest trends in the job market to make informed career decisions.")
     
@@ -251,50 +253,47 @@ elif page == "Market Trends":
             )
             st.plotly_chart(fig, use_container_width=True)
         
-        # Case status by occupation
-        st.subheader("Approval Rates by Occupation")
-        if 'SOC_TITLE' in df.columns and 'CASE_STATUS' in df.columns:
-            # Calculate approval rates by occupation
-            occupation_approval = df.groupby('SOC_TITLE')['CASE_STATUS'].apply(
-                lambda x: (x == 'Certified').mean() * 100
-            ).sort_values(ascending=False).head(10)
-            
-            fig = px.bar(
-                x=occupation_approval.index,
-                y=occupation_approval.values,
-                labels={'x': 'Occupation', 'y': 'Approval Rate (%)'},
-                title='Top 10 Occupations by Approval Rate',
-                color_discrete_sequence=['#4CAF50']
-            )
-            st.plotly_chart(fig, use_container_width=True)
+#        # Case status by occupation
+#        st.subheader("Approval Rates by Occupation")
+#        if 'SOC_TITLE' in df.columns and 'CASE_STATUS' in df.columns:
+#            # Calculate approval rates by occupation
+#            occupation_approval = df.groupby('SOC_TITLE')['CASE_STATUS'].apply(
+#                lambda x: (x == 'Certified').mean() * 100
+#            ).sort_values(ascending=False).head(10)
+#            
+#            fig = px.bar(
+#                x=occupation_approval.index,
+#                y=occupation_approval.values,
+#                labels={'x': 'Occupation', 'y': 'Approval Rate (%)'},
+#                title='Top 10 Occupations by Approval Rate',
+#                color_discrete_sequence=['#4CAF50']
+#            )
+#            st.plotly_chart(fig, use_container_width=True)
 
-        elif page == "About":
-            st.title("About JobPulse")
-            st.write("""
-            ## Our Mission
-            
-            JobPulse seeks to provide job seekers with up-to-date labor market insights so they can make wise career decisions. 
-            Since the skill requirements for technical sectors are always changing, our platform assists users in finding 
-            organizations that offer the most prospects for their career goals, as well as trending skills and wage expectations.
-            
-            ## Features
-            
-            - **Real-time Data**: Access to the latest job market trends and opportunities
-            - **Salary Insights**: Compare compensation across different roles and locations
-            - **Company Analysis**: Discover which employers are hiring the most in your field
-            - **Geographic Analysis**: Find where the best opportunities are located
-            - **Visa Status Tracking**: Monitor H-1B visa approval rates and trends
-            
-            ## Data Sources
-            
-            Our data is sourced from government databases, company filings, and public job listings to provide the most 
-            comprehensive and accurate picture of the current job market.
-            
-            ## Contact Us
-            
-            For questions or feedback, please contact us at support@jobpulse.com
-            """)
+if page == "About":
+    st.title("About JobPulse")
+    st.write("""
+    ## Our Mission
+    
+    JobPulse seeks to provide job seekers with up-to-date labor market insights so they can make wise career decisions. 
+    Since the skill requirements for technical sectors are always changing, our platform assists users in finding 
+    organizations that offer the most prospects for their career goals, as well as trending skills and wage expectations.
+    
+    ## Features
+    
+    - **Real-time Data**: Access to the latest job market trends and opportunities
+    - **Salary Insights**: Compare compensation across different roles and locations
+    - **Company Analysis**: Discover which employers are hiring the most in your field
+    - **Geographic Analysis**: Find where the best opportunities are located
+    - **Visa Status Tracking**: Monitor H-1B visa approval rates and trends
+    
+    ## Data Sources
+    
+    Our data is sourced from government databases, company filings, and public job listings to provide the most 
+    comprehensive and accurate picture of the current job market.
+    
+    """)
 
-    # Footer
-    st.markdown("---")
-    st.markdown("© 2025 JobPulse - Real-time Labor Market Insights")
+# Footer
+st.markdown("---")
+st.markdown("© 2025 JobPulse - Real-time Labor Market Insights")
