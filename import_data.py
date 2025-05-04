@@ -3,10 +3,12 @@ import json
 from datetime import datetime
 from bson import ObjectId
 
+import config
+
 # Connect to MongoDB
-client = pymongo.MongoClient("mongodb://localhost:27017/")
-db = client["jobpulse"]
-collection = db["job_listings"]
+client = pymongo.MongoClient(config.MONGO_CONNECTION_STRING)
+db = client[config.MONGO_DB_NAME]
+collection = db[config.MONGO_COLLECTION_NAME]
 
 # Convert the data format for MongoDB
 def parse_date(date_str):

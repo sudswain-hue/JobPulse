@@ -17,25 +17,67 @@ st.set_page_config(
 # MongoDB connection
 @st.cache_resource
 def init_connection():
-    return pymongo.MongoClient(config.MONGO_CONNECTION_STRING)
+    try:
+        # Add connection options to improve reliability
+        _client = pymongo.MongoClient(
+            config.MONGO_CONNECTION_STRING,
+            serverSelectionTimeoutMS=10000,  # 10 seconds timeout
+            connectTimeoutMS=30000,
+            socketTimeoutMS=30000,
+            maxPoolSize=50
+        )
+        # Force a connection check
+        _client.admin.command('ping')
+        return _client
+    except Exception as e:
+        st.error(f"MongoDB Connection Error: {e}")
+        if config.DEBUG:
+            st.exception(e)
+        return None
 
 # Function to fetch data from MongoDB
 @st.cache_data(ttl=config.CACHE_TTL)
-def get_data():
-    db = client[config.MONGO_DB_NAME]
-    items = db[config.MONGO_COLLECTION_NAME].find()
-    items = list(items)  # Convert cursor to list
-    return items
+def get_data(_client):
+    if _client is None:
+        return []
+    
+    try:
+        db = _client[config.MONGO_DB_NAME]
+        items = db[config.MONGO_COLLECTION_NAME].find()
+        items = list(items)  # Convert cursor to list
+        return items
+    except Exception as e:
+        st.error(f"Error fetching data: {e}")
+        if config.DEBUG:
+            st.exception(e)
+        return []
 
 # Initialize connection
-try:
-    client = init_connection()
+_client = init_connection()
+
+# Check if connection succeeded
+if _client:
     st.success("Connected to MongoDB")
-    data = get_data()
-    df = pd.DataFrame(data)
-except Exception as e:
-    st.error(f"Error connecting to MongoDB: {e}")
+    data = get_data(_client)
+    if data:
+        df = pd.DataFrame(data)
+    else:
+        st.warning("No data available in the MongoDB collection. Please check your database content.")
+        df = pd.DataFrame()
+else:
+    st.error("Failed to connect to MongoDB. Please check your connection string and network connectivity.")
+    # Create an empty dataframe if connection fails
     df = pd.DataFrame()
+    
+    # Provide troubleshooting information in debug mode
+    if config.DEBUG:
+        st.info("""
+        ## Troubleshooting tips:
+        1. Check if your MongoDB Atlas credentials are correct
+        2. Make sure your MongoDB Atlas cluster is running
+        3. Verify that your IP address is whitelisted in MongoDB Atlas
+        4. Ensure your network allows outbound connections to MongoDB Atlas
+        """)
 
 # Navigation
 st.sidebar.title("Navigation")
@@ -65,9 +107,10 @@ if not df.empty and page == "Dashboard":
         selected_job = st.sidebar.selectbox('Job Title', job_options)
     
     # Filter by state
+    selected_state = 'All' # Default Fallback
     if 'employer_details.EMPLOYER_STATE' in df.columns:
-        state_options = ['All'] + sorted(df['employer_details.EMPLOYER_STATE'].unique().tolist())
-        selected_state = st.sidebar.selectbox('State', state_options)
+        state_options = ['All'] + sorted(df['employer_details.EMPLOYER_STATE'].dropna().unique().tolist())
+        selected_state = st.sidebar.selectbox('Select State', state_options)
     
     # Apply filters
     filtered_df = df.copy()
@@ -75,7 +118,7 @@ if not df.empty and page == "Dashboard":
         filtered_df = filtered_df[filtered_df['VISA_CLASS'] == selected_visa]
     if selected_job != 'All' and 'JOB_TITLE' in df.columns:
         filtered_df = filtered_df[filtered_df['JOB_TITLE'] == selected_job]
-    if selected_state != 'All' and 'employer_details.EMPLOYER_STATE' in df.columns:
+    if 'employer_details.EMPLOYER_STATE' in df.columns and selected_state != 'All':
         filtered_df = filtered_df[filtered_df['employer_details.EMPLOYER_STATE'] == selected_state]
     
     # Dashboard content
@@ -160,7 +203,7 @@ else:
 # Handle page routing
 if page == "Job Search":
     # Render the job search component
-    job_search.render_job_search(client)
+    job_search.render_job_search(_client)
 
 elif page == "Market Trends":
     st.title("Labor Market Trends")
