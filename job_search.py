@@ -115,13 +115,18 @@ def render_job_search(_client):
                     if end_date and isinstance(end_date, pd.Timestamp):
                         end_date_str = end_date.strftime('%Y-%m-%d')
                         st.markdown(f"**End Date:** {end_date_str}")
-                
+                    st.markdown(f"**Salary:** {row.get('wage_details.PREVAILING_WAGE', 'N/A')} **$**")
+                    st.markdown(f"**Pay Unit:** {row.get('wage_details.WAGE_UNIT_OF_PAY', 'N/A')}")
                 with col2:
                     # Display salary information
+
                     if 'wage_details' in row and isinstance(row['wage_details'], dict):
-                        wage_from = row['wage_details'].get('WAGE_RATE_OF_PAY_FROM')
-                        wage_to = row['wage_details'].get('WAGE_RATE_OF_PAY_TO')
-                        wage_unit = row['wage_details'].get('WAGE_UNIT_OF_PAY')
+                        wage_from = row.get('wage_details.WAGE_RATE_OF_PAY_FROM')
+                        wage_to = row.get('wage_details.WAGE_RATE_OF_PAY_TO')
+                        wage_unit = row.get('wage_details.WAGE_UNIT_OF_PAY')
+                        #wage_from = row['wage_details'].get('WAGE_RATE_OF_PAY_FROM')
+                        #wage_to = row['wage_details'].get('WAGE_RATE_OF_PAY_TO')
+                        #wage_unit = row['wage_details'].get('WAGE_UNIT_OF_PAY')
                         
                         if wage_from:
                             st.markdown(f"**Salary Range:**")

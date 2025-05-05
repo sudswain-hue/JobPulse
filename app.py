@@ -65,7 +65,7 @@ if _client:
         df = pd.json_normalize(data)
     else:
         st.warning("No data available in the MongoDB collection. Please check your database content.")
-        df = pd.DataFrame()
+        df = pd.json_normalize(data)
 else:
     st.error("Failed to connect to MongoDB. Please check your connection string and network connectivity.")
     # Create an empty dataframe if connection fails
@@ -87,7 +87,7 @@ page = st.sidebar.radio("Go to", ["Dashboard", "Job Search", "Market Trends", "A
 
 if page == "Dashboard":
     # Header & App Description
-    st.title("JobPulse - Labor Market Insights")
+    st.title("JobPulse - H1B Market Insights")
     st.markdown("""
         Gain valuable insights into the current job market to make informed career decisions.
         Explore trending skills, wage expectations, and companies with the most opportunities.
@@ -99,9 +99,9 @@ if not df.empty and page == "Dashboard":
     st.sidebar.header("Dashboard Filters")
     
     # Filter by visa class
-    if 'VISA_CLASS' in df.columns:
-        visa_options = ['All'] + sorted(df['VISA_CLASS'].dropna().unique().tolist())
-        selected_visa = st.sidebar.selectbox('Visa Class', visa_options)
+    #if 'VISA_CLASS' in df.columns:
+    #    visa_options = ['All'] + sorted(df['VISA_CLASS'].dropna().unique().tolist())
+    #    selected_visa = st.sidebar.selectbox('Visa Class', visa_options)
     
     # Filter by job title
     if 'JOB_TITLE' in df.columns:
@@ -114,14 +114,26 @@ if not df.empty and page == "Dashboard":
         state_options = ['All'] + sorted(df['employer_details.EMPLOYER_STATE'].dropna().unique().tolist())
         selected_state = st.sidebar.selectbox('Select State', state_options)
     
+    if 'employer_details.EMPLOYER_NAME' in df.columns:
+        company_options = ['All'] + sorted(df['employer_details.EMPLOYER_NAME'].unique().tolist())
+        selected_company = st.sidebar.selectbox('Select Company', company_options)
+    #if 'SOC_TITLE' in df.columns:
+    #    # Filter by SOC title (occupation)
+    #    soc_options = ['All'] + sorted(df['SOC_TITLE'].unique().tolist())
+    #    selected_soc = st.sidebar.selectbox('Occupation', soc_options)
+
     # Apply filters
     filtered_df = df.copy()
-    if selected_visa != 'All':
-        filtered_df = filtered_df[filtered_df['VISA_CLASS'] == selected_visa]
+    #if selected_visa != 'All':
+    #    filtered_df = filtered_df[filtered_df['VISA_CLASS'] == selected_visa]
     if selected_job != 'All':
         filtered_df = filtered_df[filtered_df['JOB_TITLE'] == selected_job]
     if selected_state != 'All':
         filtered_df = filtered_df[filtered_df['employer_details.EMPLOYER_STATE'] == selected_state]
+    if selected_company != 'All':
+        filtered_df = filtered_df[filtered_df['employer_details.EMPLOYER_NAME'] == selected_company]
+    #if selected_soc != 'All':
+    #    filtered_df = filtered_df[filtered_df['SOC_TITLE'] == selected_soc]
     
     # Dashboard content
     #col1, col2 = st.columns(2)
@@ -151,20 +163,20 @@ if not df.empty and page == "Dashboard":
     
     # More detailed insights
     st.subheader("Job Market Trends")
-    col3, col4, col5 = st.columns(3)
+    col1, col2 = st.columns(2)
     
     # Key metrics
-    with col3:
-        if 'CASE_STATUS' in filtered_df.columns:
-            approval_rate = (filtered_df['CASE_STATUS'] == 'Certified').mean() * 100
-            st.metric("Approval Rate", f"{approval_rate:.1f}%")
-    
-    with col4:
+    #with col3:
+    #    if 'CASE_STATUS' in filtered_df.columns:
+    #        approval_rate = (filtered_df['CASE_STATUS'] == 'Certified').mean() * 100
+    #        st.metric("Approval Rate", f"{approval_rate:.1f}%")
+    #
+    with col1:
         if 'wage_details.WAGE_RATE_OF_PAY_FROM' in filtered_df.columns:
             avg_salary = filtered_df['wage_details.WAGE_RATE_OF_PAY_FROM'].mean()
             st.metric("Average Starting Salary", f"${avg_salary:,.2f}")
     
-    with col5:
+    with col2:
         if 'SOC_TITLE' in filtered_df.columns:
             top_occupation = filtered_df['SOC_TITLE'].value_counts().index[0]
             st.metric("Top Occupation", top_occupation)
@@ -201,8 +213,16 @@ if not df.empty and page == "Dashboard":
         display_df['Starting Salary'] = display_df['Starting Salary'].apply(lambda x: f"${x:,.2f}")
         
         st.dataframe(display_df, use_container_width=True)
+
+    st.subheader("H-1B Petitions by Associate Title")
+    if 'SOC_TITLE' in filtered_df.columns:
+         assoc_counts = filtered_df['SOC_TITLE'].value_counts().reset_index()
+         assoc_counts.columns = ['Associate Title', 'H1B Count']
+         fig = px.bar(assoc_counts, x='Associate Title', y='H1B Count', title='H1B Filings by Associate Title')
+         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("No job listings match your filter criteria.")
+
 else:
     st.warning("No data available. Please check your MongoDB connection and database content.")
 
