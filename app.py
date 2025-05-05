@@ -149,17 +149,7 @@ if not df.empty and page == "Dashboard":
     #        )
     #        st.plotly_chart(fig, use_container_width=True)
     
-    #with col2:
-    #    st.subheader("Salary Range Analysis")
-    #    if 'wage_details.WAGE_RATE_OF_PAY_FROM' in filtered_df.columns:
-    #        fig = px.histogram(
-    #            filtered_df,
-    #            x='wage_details.WAGE_RATE_OF_PAY_FROM',
-    #            nbins=20,
-    #            title="Starting Salary Distribution",
-    #            color_discrete_sequence=['#3366CC']
-    #        )
-    #        st.plotly_chart(fig, use_container_width=True)
+    
     
     # More detailed insights
     st.subheader("Job Market Trends")
