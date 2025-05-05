@@ -27,18 +27,19 @@ def render_job_search(_client):
     with col1:
         # Job title search (text input for more flexibility)
         job_title_search = st.text_input("Job Title Keywords", "")
+        company_name_search = st.text_input("Company Name", "")
         
         # Salary range slider
-        if 'wage_details.WAGE_RATE_OF_PAY_FROM' in df.columns:
-            min_salary = int(df['wage_details.WAGE_RATE_OF_PAY_FROM'].min())
-            max_salary = int(df['wage_details.WAGE_RATE_OF_PAY_FROM'].max())
-            salary_range = st.slider(
-                "Salary Range",
-                min_value=min_salary,
-                max_value=max_salary,
-                value=(min_salary, max_salary),
-                step=5000
-            )
+        #if 'wage_details.WAGE_RATE_OF_PAY_FROM' in df.columns:
+        #    min_salary = int(df['wage_details.WAGE_RATE_OF_PAY_FROM'].min())
+        #    max_salary = int(df['wage_details.WAGE_RATE_OF_PAY_FROM'].max())
+        #    salary_range = st.slider(
+        #        "Salary Range",
+        #        min_value=min_salary,
+        #        max_value=max_salary,
+        #        value=(min_salary, max_salary),
+        #        step=5000
+        #    )
     
     with col2:
         # Location filter (state)
@@ -53,9 +54,9 @@ def render_job_search(_client):
             selected_city = st.selectbox('City', city_options)
         
         # Visa class filter
-        if 'VISA_CLASS' in df.columns:
-            visa_options = ['All'] + sorted(df['VISA_CLASS'].unique().tolist())
-            selected_visa = st.selectbox('Visa Class', visa_options)
+        #if 'VISA_CLASS' in df.columns:
+        #    visa_options = ['All'] + sorted(df['VISA_CLASS'].unique().tolist())
+        #    selected_visa = st.selectbox('Visa Class', visa_options)
     
     # Apply filters
     filtered_df = df.copy()
@@ -63,13 +64,15 @@ def render_job_search(_client):
     # Job title filter (partial match)
     if job_title_search:
         filtered_df = filtered_df[filtered_df['JOB_TITLE'].str.contains(job_title_search, case=False, na=False)]
-    
+    if company_name_search:
+        filtered_df = filtered_df[filtered_df['employer_details.EMPLOYER_NAME'].str.contains(company_name_search, case=False, na=False)]
+
     # Salary filter
-    if 'wage_details.WAGE_RATE_OF_PAY_FROM' in df.columns:
-        filtered_df = filtered_df[
-            (filtered_df['wage_details.WAGE_RATE_OF_PAY_FROM'] >= salary_range[0]) & 
-            (filtered_df['wage_details.WAGE_RATE_OF_PAY_FROM'] <= salary_range[1])
-        ]
+    #if 'wage_details.WAGE_RATE_OF_PAY_FROM' in df.columns:
+    #    filtered_df = filtered_df[
+    #        (filtered_df['wage_details.WAGE_RATE_OF_PAY_FROM'] >= salary_range[0]) & 
+    #        (filtered_df['wage_details.WAGE_RATE_OF_PAY_FROM'] <= salary_range[1])
+    #    ]
     
     # State filter
     if selected_state != 'All' and 'worksite_details.WORKSITE_STATE' in df.columns:
@@ -80,8 +83,8 @@ def render_job_search(_client):
         filtered_df = filtered_df[filtered_df['worksite_details.WORKSITE_CITY'] == selected_city]
     
     # Visa class filter
-    if selected_visa != 'All' and 'VISA_CLASS' in df.columns:
-        filtered_df = filtered_df[filtered_df['VISA_CLASS'] == selected_visa]
+    #if selected_visa != 'All' and 'VISA_CLASS' in df.columns:
+    #    filtered_df = filtered_df[filtered_df['VISA_CLASS'] == selected_visa]
     
     # Display search results
     st.subheader(f"Search Results ({len(filtered_df)} jobs found)")

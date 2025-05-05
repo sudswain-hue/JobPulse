@@ -124,31 +124,30 @@ if not df.empty and page == "Dashboard":
         filtered_df = filtered_df[filtered_df['employer_details.EMPLOYER_STATE'] == selected_state]
     
     # Dashboard content
-    col1, col2 = st.columns(2)
+    #col1, col2 = st.columns(2)
+    #with col1:
+    #    st.subheader("Case Status Distribution")
+    #    if 'CASE_STATUS' in df.columns:
+    #        status_counts = filtered_df['CASE_STATUS'].value_counts()
+    #        fig = px.pie(
+    #            names=status_counts.index,
+    #            values=status_counts.values,
+    #            hole=0.4,
+    #            color_discrete_sequence=px.colors.qualitative.Bold
+    #        )
+    #        st.plotly_chart(fig, use_container_width=True)
     
-    with col1:
-        st.subheader("Case Status Distribution")
-        if 'CASE_STATUS' in df.columns:
-            status_counts = filtered_df['CASE_STATUS'].value_counts()
-            fig = px.pie(
-                names=status_counts.index,
-                values=status_counts.values,
-                hole=0.4,
-                color_discrete_sequence=px.colors.qualitative.Bold
-            )
-            st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.subheader("Salary Range Analysis")
-        if 'wage_details.WAGE_RATE_OF_PAY_FROM' in filtered_df.columns:
-            fig = px.histogram(
-                filtered_df,
-                x='wage_details.WAGE_RATE_OF_PAY_FROM',
-                nbins=20,
-                title="Starting Salary Distribution",
-                color_discrete_sequence=['#3366CC']
-            )
-            st.plotly_chart(fig, use_container_width=True)
+    #with col2:
+    #    st.subheader("Salary Range Analysis")
+    #    if 'wage_details.WAGE_RATE_OF_PAY_FROM' in filtered_df.columns:
+    #        fig = px.histogram(
+    #            filtered_df,
+    #            x='wage_details.WAGE_RATE_OF_PAY_FROM',
+    #            nbins=20,
+    #            title="Starting Salary Distribution",
+    #            color_discrete_sequence=['#3366CC']
+    #        )
+    #        st.plotly_chart(fig, use_container_width=True)
     
     # More detailed insights
     st.subheader("Job Market Trends")
@@ -192,7 +191,12 @@ if not df.empty and page == "Dashboard":
         
         # Rename columns for better readability
         display_df.columns = ['Job Title', 'Occupation', 'Employer', 'City', 'State', 'Starting Salary', 'Status']
-        
+
+        # 🔧 Fix: Ensure text columns are strings (to avoid ArrowTypeError)
+        for col in ['Job Title', 'Occupation', 'Employer', 'City', 'State', 'Status']:
+            if col in display_df.columns:
+                display_df[col] = display_df[col].astype(str)
+            
         # Format salary values
         display_df['Starting Salary'] = display_df['Starting Salary'].apply(lambda x: f"${x:,.2f}")
         
